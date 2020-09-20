@@ -1,0 +1,27 @@
+{
+  "name": "blockchain",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "node_1": "nodemon ./bin/www 3001 http://localhost:3001",
+    "node_2": "nodemon ./bin/www 3002 http://localhost:3002",
+    "node_3": "nodemon ./bin/www 3003 http://localhost:3003",
+    "node_4": "nodemon ./bin/www 3004 http://localhost:3004"
+  },
+  "dependencies": {
+    "axios": "^0.20.0",
+    "body-parser": "^1.19.0",
+    "cookie-parser": "^1.4.5",
+    "cors": "^2.8.5",
+    "debug": "~2.6.9",
+    "express": "~4.16.1",
+    "http-errors": "~1.6.3",
+    "jade": "~1.11.0",
+    "morgan": "~1.9.1",
+    "nodemon": "^2.0.4",
+    "request": "^2.88.2",
+    "request-promise": "^4.2.6",
+    "sha256": "^0.2.0",
+    "uuid": "^8.3.0"
+  }
+}
