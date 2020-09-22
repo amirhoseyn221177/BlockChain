@@ -3,23 +3,31 @@ const router= express.Router();
 const BlockChain=require('../BlockChain')
 const uuid=require('uuid');
 const bitcoin=new BlockChain()
-const port =process.argv[2]
-const currentUrl=process.argv[3]
 const nodeAdress=uuid.v1().split('-').join('')
-const rp= require('request-promise');
 const { default: Axios } = require('axios');
 
 router.get('/blockchain',(req,res)=>{
     res.send(bitcoin)
 })
 
-router.post('/transaction',(req,res)=>{
-    const blockIndex= bitcoin.createNewTransaction(req.body.amount,req.body.sender,req.body.recipient)
-    res.json({note:`Transaction will be added in block ${blockIndex}`})
+router.post('/transaction',async(req,res)=>{
+    const newTransaction= await req.body
+   const index= bitcoin.addToPending(newTransaction)
+    // res.json({note:"has been added successfully to"+index})
+})
+
+router.post('/transaction/broadcast',async(req,res)=>{
+    console.log(20)
+    const transaction=await req.body
+    const createNewTransaction=bitcoin.createNewTransaction(transaction.amount,transaction.sender,transaction.recipient)
+    bitcoin.addToPending(createNewTransaction)
+    bitcoin.netWorkNodes.map(async(n)=>{
+        await Axios.post(n+'/api/transaction',createNewTransaction)
+    })
 })
 
 
-router.get('/mine',(req,res)=>{
+router.get('/mine',async(req,res)=>{
     const lastBlock=bitcoin.getLastBlock()
     const previHash=lastBlock['hash']
     const currBlock={
@@ -27,16 +35,42 @@ router.get('/mine',(req,res)=>{
         index:lastBlock['index']+1
     }
 
-    bitcoin.createNewTransaction(12.5,"00",nodeAdress)
     const nonce = bitcoin.proofOfWork(previHash,currBlock)
     const blockHash=bitcoin.hashBlock(previHash,currBlock,nonce)
     const newBlock= bitcoin.createNewBlock(nonce,previHash,blockHash)
-    res.json({note:"new block",block:newBlock})
+    console.log(newBlock)
+    bitcoin.netWorkNodes.map(async(n)=>{
+        console.log(43)
+        console.log(n)
+         const resp=await Axios.post(n+'/api/receive-new-block',{newBlock:newBlock})
+         console.log(resp.data)
+    })
+
+    // await Axios.post(bitcoin.currentNodeUrl+'/api/transaction/broadcast',{amount:12,sender:'00',recipient:nodeAdress})
+        
+    res.json({ note: "new block", block: newBlock })
 })
+
+
+router.post('/receive-new-block',async(req,res)=>{
+    console.log(53)
+    const newBlock= await req.body.newBlock
+    const lastBlock=bitcoin.getLastBlock()
+    const correcthash=lastBlock.hash===newBlock.previousBlockHash
+    const correctIndex=lastBlock['index']+1===newBlock['index']
+    if(correctIndex&&correcthash){
+        bitcoin.chain.push(newBlock)
+        bitcoin.pendingTransactions=[]
+        res.json({note:"new block added "})
+    }else{
+        res.json({note:"rejected block"})
+    }
+})
+
 
 router.post('/register-node-broadcast-node',async function (req, res) {
         const newNodeUrl = await req.body.newNodeUrl;
-        if (!bitcoin.netWorkNodes.includes(newNodeUrl)) {
+        if (!bitcoin.netWorkNodes.includes(newNodeUrl)&&bitcoin.currentNodeUrl!==newNodeUrl){
             console.log(newNodeUrl);
             bitcoin.netWorkNodes.push(newNodeUrl);
             let data = { newNodeUrl: newNodeUrl };
@@ -44,11 +78,11 @@ router.post('/register-node-broadcast-node',async function (req, res) {
                 const resp= await Axios.post(n+'/api/register-node',data)
                 console.log(resp.data)
             })
-
-         const bulkResp=await Axios.post(newNodeUrl+'/api/register-node-bulk',{allNodes:[...bitcoin.netWorkNodes,bitcoin.currentNodeUrl]})
-         console.log(bulkResp.data)
+         await Axios.post(newNodeUrl+'/api/register-node-bulk',{allNodes:[...bitcoin.netWorkNodes,bitcoin.currentNodeUrl]})
          res.json({message:'node has been registered'})
-        }
+        }else(
+            res.json({note:'sorry its not possible'})
+        )
     }
     
 )

@@ -1,5 +1,6 @@
 const sha = require('sha256')
 const currentUrl=process.argv[3]
+const uuid=require('uuid');
 
 class BlockChain {
     constructor() {
@@ -31,13 +32,22 @@ class BlockChain {
 
     createNewTransaction(amount, sender, recipient) {
         const newTransaction = {
+            Id:uuid.v1().split('-').join(''),
             amount: amount,
             sender: sender,
             recipient: recipient
         };
-        this.pendingTransactions.push(newTransaction);
+        // this.pendingTransactions.push(newTransaction);
         return newTransaction;
     }
+
+    addToPending(transaction){
+        console.log(transaction)
+        this.pendingTransactions.push(transaction)
+        return this.getLastBlock['index']+1
+    }
+
+
     hashBlock(prevBlock, currentBlock, nonce) {
         const dataString = prevBlock + nonce.toString() + JSON.stringify(currentBlock);
         const hash = sha(dataString);
