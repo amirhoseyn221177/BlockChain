@@ -24,6 +24,7 @@ router.post('/transaction/broadcast',async(req,res)=>{
     bitcoin.netWorkNodes.map(async(n)=>{
         await Axios.post(n+'/api/transaction',createNewTransaction)
     })
+    res.json({note:"its done"})
 })
 
 
@@ -40,14 +41,11 @@ router.get('/mine',async(req,res)=>{
     const newBlock= bitcoin.createNewBlock(nonce,previHash,blockHash)
     console.log(newBlock)
     bitcoin.netWorkNodes.map(async(n)=>{
-        console.log(43)
-        console.log(n)
          const resp=await Axios.post(n+'/api/receive-new-block',{newBlock:newBlock})
-         console.log(resp.data)
     })
 
-    // await Axios.post(bitcoin.currentNodeUrl+'/api/transaction/broadcast',{amount:12,sender:'00',recipient:nodeAdress})
-        
+    const resp=await Axios.post(bitcoin.currentNodeUrl+'/api/transaction/broadcast',{amount:12,sender:'00',recipient:nodeAdress})
+    console.log(resp.data)
     res.json({ note: "new block", block: newBlock })
 })
 

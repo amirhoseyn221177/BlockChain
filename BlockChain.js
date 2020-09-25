@@ -64,6 +64,13 @@ class BlockChain {
 
         return nonce;
     }
+    chainIsValid(blockChain){
+        for(let i=1;i<blockChain.length;i++){
+            const currBlock=blockChain[i]
+            const prevBlock=blockChain[i-1]
+            if()
+        }
+    }
 }
 
 
